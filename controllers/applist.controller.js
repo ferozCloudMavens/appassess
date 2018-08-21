@@ -1,7 +1,7 @@
 let superagent = require('superagent');
 
-let refresh = require('./refreshTokenController');
-let AppList = require('../models/appsModel');
+let refresh = require('./refresh-token.controller');
+let AppList = require('../models/apps.model');
 
 module.exports = (mongoDoc, boolCallRefresh) => {
     return new Promise((resolve, reject) => {

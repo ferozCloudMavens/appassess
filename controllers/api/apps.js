@@ -1,5 +1,5 @@
 let router = require('express').Router();
-let AppList = require('../../models/appsModel');
+let AppList = require('../../models/apps.model');
 
 let appdoc = '';
 let appId = '';

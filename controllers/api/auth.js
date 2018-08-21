@@ -1,7 +1,7 @@
 let router = require('express').Router();
 
-var tokenCtrl = require('../../controllers/tokenController');
-let AppListCtrl = require('../../controllers/appListController');
+var tokenCtrl = require('../token.controller');
+let AppListCtrl = require('../applist.controller');
 
 let url = '/api/apps/';
 let code = '';

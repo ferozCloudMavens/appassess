@@ -1,6 +1,6 @@
 let superagent = require('superagent');
 
-let Token = require('../models/tokensModel');
+let Token = require('../models/tokens.model');
 
 module.exports = (mongoDoc) => {
     return new Promise((resolve, reject) => {

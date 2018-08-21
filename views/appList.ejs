@@ -1,0 +1,34 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<form action="" method="POST">
+    <div class="form-check" style="margin: 20px;">
+        <h3>Please select an app from the list below:</h3>
+        <% for(i of applist.apps) {%>
+            <p class="p-3">
+                <input class="form-check-input" type="radio" aria-label="Select an app name" name="appId" value="<%= i.id %>" onclick="this.form.submit();">
+                <label class="form-check-label" style="padding: 5px;">
+                    <%= i.name %>
+                </label>
+            </p>
+            <% } %>
+    </div>
+</form>
+
+<% 
+let appToUse; 
+if(appId) { 
+    for(thisApp of applist.apps) {
+        if(thisApp.id == appId) {
+            appToUse = thisApp;
+            break;
+        }
+    }
+}
+%>
+<% if(appToUse) { %>
+    <ul class="list-group"></ul>
+    <li class="list-group-item list-group-item-info">Name is <%= appToUse.name %></li>
+    <li class="list-group-item list-group-item-info">Stack is <%= appToUse.stack.name %></li>
+    <li class="list-group-item list-group-item-info">Region is <%= appToUse.region.name %></li>
+    <li class="list-group-item list-group-item-info">Buildpack is <%= appToUse.buildpack_provided_description %></li>
+<% } %>

@@ -1,11 +1,18 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<!-- FIXME: Make chart_id dynamic. Create new div for each chart_id -->
 
 <form action="" method="POST">
     <div class="form-check" style="margin: 20px;">
-        <h3>Please select an app from the list below:</h3>
+        <h3>Selecting an app below will immediately start the metric-collection process, which includes enabling addons if require. Please select an app from the list below:</h3>
         <% for(i of applist.apps) {%>
             <p class="p-3">
-                <input class="form-check-input" type="radio" aria-label="Select an app name" name="appId" value="<%= i.id %>" onclick="this.form.submit();">
+                <input class="form-check-input" type="radio" aria-label="Select an app name" name="appId" value="<%= i.id %>" onclick="this.form.submit();"
+                <% if(appId){
+                    if(i.id == appId){ %>
+                        <%= "checked" %>
+                    <% } 
+                } %>
+                %> >
                 <label class="form-check-label" style="padding: 5px;">
                     <%= i.name %>
                 </label>
@@ -32,3 +39,20 @@ if(appId) {
     <li class="list-group-item list-group-item-info">Region is <%= appToUse.region.name %></li>
     <li class="list-group-item list-group-item-info">Buildpack is <%= appToUse.buildpack_provided_description %></li>
 <% } %>
+
+
+<script
+  type='text/javascript'
+  src='https://sdk.librato.com/embedding/librato-sdk-v1.2.3-min.js'
+  charset='utf-8'
+  data-librato_email='app100037598@heroku.com'
+  data-librato_token='04f8cd86862b2306118862b7dec513e536e78366de07e86a459e40170fa0e442'>
+</script>
+<div
+class='librato-display-media'
+data-chart_id='8055783'
+data-duration='3600'
+data-height='200'
+data-width='400'
+data-source='*'
+></div>

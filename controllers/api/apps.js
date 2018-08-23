@@ -12,14 +12,14 @@ router
             .exec()
             .then((doc) => {
                 appdoc = doc;
-                res.render('appList', { applist: doc, appId: appId });
+                res.render('applist', { applist: doc, appId: appId });
             }).catch((err) => {
                 res.render('errorPage', { error: err });
             });
     })
 
     .post('/:appId', (req, res) => {
-        res.render('appList', { applist: appdoc, appId: req.body.appId });
+        res.render('applist', { applist: appdoc, appId: req.body.appId });
     });
 
 

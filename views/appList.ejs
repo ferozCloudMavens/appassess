@@ -3,19 +3,22 @@
 
 <form action="" method="POST">
     <div class="form-check" style="margin: 20px;">
-        <h3>Selecting an app below will immediately start the metric-collection process, which includes enabling addons if require. Please select an app from the list below:</h3>
+        <p>Selecting an app below will immediately start the metric-collection process, which includes enabling addons if require.
+            <br/> Please run the following command in your Terminal/Command Prompt </p> 
+            <!-- HACK: Ask in Slack about how to do this via API  -->
+            <h5>heroku labs:enable log-runtime-metrics -a yourAppName</h5>
+        <h3>Please select an app from the list below:</h3>
         <% for(i of applist.apps) {%>
             <p class="p-3">
                 <input class="form-check-input" type="radio" aria-label="Select an app name" name="appId" value="<%= i.id %>" onclick="this.form.submit();"
-                <% if(appId){
-                    if(i.id == appId){ %>
-                        <%= "checked" %>
+                    <% if(appId){ if(i.id==appId){ %>
+                <%= "checked" %>
                     <% } 
                 } %>
-                %> >
-                <label class="form-check-label" style="padding: 5px;">
-                    <%= i.name %>
-                </label>
+                        %> >
+                        <label class="form-check-label" style="padding: 5px;">
+                            <%= i.name %>
+                        </label>
             </p>
             <% } %>
     </div>
@@ -32,27 +35,33 @@ if(appId) {
     }
 }
 %>
-<% if(appToUse) { %>
-    <ul class="list-group"></ul>
-    <li class="list-group-item list-group-item-info">Name is <%= appToUse.name %></li>
-    <li class="list-group-item list-group-item-info">Stack is <%= appToUse.stack.name %></li>
-    <li class="list-group-item list-group-item-info">Region is <%= appToUse.region.name %></li>
-    <li class="list-group-item list-group-item-info">Buildpack is <%= appToUse.buildpack_provided_description %></li>
-<% } %>
+    <% if(appToUse) { %>
+        <ul class="list-group"></ul>
+        <li class="list-group-item list-group-item-info">Name is
+            <%= appToUse.name %>
+        </li>
+        <li class="list-group-item list-group-item-info">Stack is
+            <%= appToUse.stack.name %>
+        </li>
+        <li class="list-group-item list-group-item-info">Region is
+            <%= appToUse.region.name %>
+        </li>
+        <li class="list-group-item list-group-item-info">Buildpack is
+            <%= appToUse.buildpack_provided_description %>
+        </li>
 
+        <script type="text/javascript">
+            fetch('/librato/<%=applist._id%>?appId=<%=appToUse.id%>') // need to use /librato/userId?appId=$appId$ in fetch('https://jsonplaceholder.typicode.com/todos/1')
+                .then(response => response.json())
+                .then(json => {
+                    document.getElementById('output').innerHTML = JSON.stringify(json);
+                });                    
+        </script>
+        <% } %>
 
-<script
-  type='text/javascript'
-  src='https://sdk.librato.com/embedding/librato-sdk-v1.2.3-min.js'
-  charset='utf-8'
-  data-librato_email='app100037598@heroku.com'
-  data-librato_token='04f8cd86862b2306118862b7dec513e536e78366de07e86a459e40170fa0e442'>
-</script>
-<div
-class='librato-display-media'
-data-chart_id='8055783'
-data-duration='3600'
-data-height='200'
-data-width='400'
-data-source='*'
-></div>
+            <div id="output"></div>
+
+            <script type='text/javascript' src='https://sdk.librato.com/embedding/librato-sdk-v1.2.3-min.js' charset='utf-8' data-librato_email='app100037598@heroku.com'
+                data-librato_token='04f8cd86862b2306118862b7dec513e536e78366de07e86a459e40170fa0e442'>
+                </script>
+            <div class='librato-display-media' data-chart_id='8055783' data-duration='3600' data-height='200' data-width='400' data-source='*'></div>

@@ -14,15 +14,16 @@ module.exports = (mongoDoc) => {
                     reject(Error(err));
                 }
                 let superbody = supres.body;
-                updateMongo(mongoDoc, superbody);
+                updateMongo(superbody);
                 resolve(superbody);                
             });
     });
 }
 
-function updateMongo(mongoDoc, superbody) {
+function updateMongo(superbody) {
     Token
-        .findOne({ 'user_id': mongoDoc.user_id })
+        .findOne({ 'user_id': superbody.user_id })
+        .select('access_token expires_in date')
         .exec()
         .then((foundToken) => {
             foundToken.access_token = superbody.access_token;

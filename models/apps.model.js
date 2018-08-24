@@ -107,5 +107,4 @@ const appListSchema = new db.Schema({
     }]
 });
 
-let AppList = db.model('AppList', appListSchema);
-module.exports = AppList;
+module.exports = db.model('AppList', appListSchema);

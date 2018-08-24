@@ -10,5 +10,4 @@ const tokenSchema = new db.Schema({
     date: { type: Date, required: true, default: Date.now }
 });
 
-let Token = db.model('Token', tokenSchema);
-module.exports = Token;
+module.exports = db.model('Token', tokenSchema);

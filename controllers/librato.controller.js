@@ -24,18 +24,48 @@ router
                     .then((updatedToken) => {
                         Promise.all([getAddons(updatedToken, appId), getAddonAttachments(updatedToken)])
                             .then((result) => {
+                                let libratoExistsOnApp, libratoOnAnotherApp, libratoNotFound;
+
                                 result.map(entry => {
                                     entry.map((subentry) => {
                                         if (subentry.addon_service && subentry.addon_service.name.includes('librato')) {
-                                            saveLibratoConfigVars(subentry.id, updatedToken);
+                                            libratoExistsOnApp = true;
                                         } else if (subentry.addon && subentry.addon.name.includes('librato')) {
-                                            saveLibratoConfigVars(subentry.addon.id, updatedToken);
-                                            attachLibratoToApp(subentry.addon.name, appId, updatedToken);
+                                            libratoOnAnotherApp = true;
                                         } else {
-                                            createLibratoAddon(libratoPlanName, appId, updatedToken);
+                                            libratoNotFound = true;
                                         }
                                     })
                                 });
+                                
+                                if (libratoExistsOnApp) {
+                                    saveLibratoConfigVars(subentry.id, updatedToken)
+                                        .then((result) => {
+                                            console.log(result);
+                                        }).catch((err) => {
+                                            console.error(err);
+                                        });
+                                } else if (libratoOnAnotherApp) {
+                                    saveLibratoConfigVars(subentry.addon.id, updatedToken)
+                                        .then((result) => {
+                                            console.log(result);
+                                        }).catch((err) => {
+                                            console.error(err);
+                                        });
+                                    attachLibratoToApp(subentry.addon.name, appId, updatedToken)
+                                        .then((result) => {
+                                            console.log(result);
+                                        }).catch((err) => {
+                                            console.error(err);
+                                        });
+                                } else if (libratoNotFound) {
+                                    createLibratoAddon(libratoPlanName, appId, updatedToken)
+                                        .then((result) => {
+                                            console.log(result);
+                                        }).catch((err) => {
+                                            console.error(err);
+                                        });
+                                }
                                 res.send(result);
                             }).catch((err) => {
                                 console.error(err);
@@ -155,10 +185,10 @@ function attachLibratoToApp(addonname, appId, tokenToUse) {
             .set('Authorization', `Bearer ${tokenToUse.access_token}`)
             .set('Accept', 'application/vnd.heroku+json; version=3')
             .set('Content-Type', 'application/json')
-            .send(`{
-                "addon": ${addonname},
-                "app": ${appId}
-              }`)
+            .send(JSON.parse(`{
+                "addon": "${addonname}",
+                "app": "${appId}"
+              }`))
             .end((err, supres) => {
                 if (err) {
                     console.error(err);
@@ -178,9 +208,9 @@ function createLibratoAddon(planToUse, appId, tokenToUse) {
             .set('Authorization', `Bearer ${tokenToUse.access_token}`)
             .set('Accept', 'application/vnd.heroku+json; version=3')
             .set('Content-Type', 'application/json')
-            .send(`{
-                "plan": ${planToUse}
-              }`)
+            .send(JSON.parse(`{
+                "plan": "${planToUse}"
+              }`))
             .end((err, supres) => {
                 if (err) {
                     console.error(err);

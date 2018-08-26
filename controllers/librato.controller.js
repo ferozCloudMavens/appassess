@@ -25,19 +25,26 @@ router
                         Promise.all([getAddons(updatedToken, appId), getAddonAttachments(updatedToken)])
                             .then((result) => {
                                 let libratoExistsOnApp, libratoOnAnotherApp, libratoNotFound;
+                                let found = false;
 
-                                result.map(entry => {
-                                    entry.map((subentry) => {
-                                        if (subentry.addon_service && subentry.addon_service.name.includes('librato')) {
-                                            libratoExistsOnApp = true;
-                                        } else if (subentry.addon && subentry.addon.name.includes('librato')) {
-                                            libratoOnAnotherApp = true;
-                                        } else {
-                                            libratoNotFound = true;
+                                for (const entry of result) {
+                                    if (!found) {
+                                        for (const subentry of entry) {
+                                            if (subentry.addon_service && subentry.addon_service.name.includes('librato')) {
+                                                libratoExistsOnApp = true;
+                                                found = true;
+                                                break;
+                                            } else if (subentry.addon && subentry.addon.name.includes('librato')) {
+                                                libratoOnAnotherApp = true;
+                                                found = true;
+                                                break;
+                                            } else {
+                                                libratoNotFound = true;
+                                            }
                                         }
-                                    })
-                                });
-                                
+                                    }
+                                }
+
                                 if (libratoExistsOnApp) {
                                     saveLibratoConfigVars(subentry.id, updatedToken)
                                         .then((result) => {

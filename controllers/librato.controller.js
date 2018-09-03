@@ -24,17 +24,19 @@ router
                     .then((updatedToken) => {
                         Promise.all([getAddons(updatedToken, appId), getAddonAttachments(updatedToken)])
                             .then((result) => {
-                                let libratoExistsOnApp, libratoOnAnotherApp, libratoNotFound;
+                                let libratoExistsOnApp, libratoOnAnotherApp, libratoNotFound, addon;
                                 let found = false;
 
                                 for (const entry of result) {
                                     if (!found) {
                                         for (const subentry of entry) {
                                             if (subentry.addon_service && subentry.addon_service.name.includes('librato')) {
+                                                addon = subentry;
                                                 libratoExistsOnApp = true;
                                                 found = true;
                                                 break;
                                             } else if (subentry.addon && subentry.addon.name.includes('librato')) {
+                                                addon = subentry;
                                                 libratoOnAnotherApp = true;
                                                 found = true;
                                                 break;
@@ -46,20 +48,20 @@ router
                                 }
 
                                 if (libratoExistsOnApp) {
-                                    saveLibratoConfigVars(subentry.id, updatedToken)
+                                    saveLibratoConfigVars(addon.id, updatedToken)
                                         .then((result) => {
                                             console.log(result);
                                         }).catch((err) => {
                                             console.error(err);
                                         });
                                 } else if (libratoOnAnotherApp) {
-                                    saveLibratoConfigVars(subentry.addon.id, updatedToken)
+                                    saveLibratoConfigVars(addon.addon.id, updatedToken)
                                         .then((result) => {
                                             console.log(result);
                                         }).catch((err) => {
                                             console.error(err);
                                         });
-                                    attachLibratoToApp(subentry.addon.name, appId, updatedToken)
+                                    attachLibratoToApp(addon.addon.name, appId, updatedToken)
                                         .then((result) => {
                                             console.log(result);
                                         }).catch((err) => {
@@ -231,19 +233,29 @@ function createLibratoAddon(planToUse, appId, tokenToUse) {
 }
 
 function saveConfigsToDb(tokenToUse, superbody) {
-    let ltoken = new LibratoToken({ _id: tokenToUse.user_id });
-    superbody.map((entry) => {
-        if (entry['name'].includes("USER")) {
-            ltoken.LIBRATO_USERNAME = entry['value'];
-        } else if (entry['name'].includes("TOKEN")) {
-            ltoken.LIBRATO_TOKEN = encyption.encrypt(entry['value']);
-        }
-    });
-    ltoken.save((mongoErr, _savedDoc) => {
-        if (mongoErr) {
-            console.error('mongoErr', mongoErr);
-        }
-    });
+    LibratoToken
+        .findOne({ '_id': tokenToUse.user_id })
+        .select('addonAttachments')
+        .exec()
+        .then((doc) => {
+            if (!doc) {
+                let ltoken = new LibratoToken({ _id: tokenToUse.user_id });
+                superbody.map((entry) => {
+                    if (entry['name'].includes("USER")) {
+                        ltoken.LIBRATO_USERNAME = entry['value'];
+                    } else if (entry['name'].includes("TOKEN")) {
+                        ltoken.LIBRATO_TOKEN = encyption.encrypt(entry['value']);
+                    }
+                });
+                ltoken.save((mongoErr, _savedDoc) => {
+                    if (mongoErr) {
+                        console.error('mongoErr', mongoErr);
+                    }
+                });
+            }
+        }).catch((err) => {
+            console.error('saveConfigsToDb err is', err);
+        });
 }
 
 module.exports = router;

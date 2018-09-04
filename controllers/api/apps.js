@@ -22,5 +22,4 @@ router
         res.render('applist', { applist: appdoc, appId: req.body.appId });
     });
 
-
 module.exports = router;

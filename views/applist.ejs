@@ -3,10 +3,12 @@
 
 <form action="" method="POST">
     <div class="form-check" style="margin: 20px;">
-        <p>Selecting an app below will immediately start the metric-collection process, which includes enabling addons if require.
-            <br/> Please run the following command in your Terminal/Command Prompt </p> 
-            <!-- HACK: Ask in Slack about how to do this via API  -->
-            <h5>heroku labs:enable log-runtime-metrics -a yourAppName</h5>
+        <p>Selecting an app below will immediately start the metric-collection process, which includes enabling addons if
+            require.
+            <br/> Please run the following command in your Terminal/Command Prompt
+        </p>
+        <!-- HACK: Ask in Slack about how to do this via API  -->
+        <h5>heroku labs:enable log-runtime-metrics -a yourAppName</h5>
         <h3>Please select an app from the list below:</h3>
         <% for(i of applist.apps) {%>
             <p class="p-3">
@@ -51,10 +53,23 @@ if(appId) {
         </li>
 
         <script type="text/javascript">
-            fetch('/librato/<%=applist._id%>?appId=<%=appToUse.id%>') // need to use /librato/userId?appId=$appId$ in fetch('https://jsonplaceholder.typicode.com/todos/1')
+            fetch('/librato/<%=applist._id%>', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    // "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: JSON.stringify({
+                    appId: '<%=appToUse.id%>'
+                })
+            })
                 .then(response => response.json())
                 .then(json => {
-                    document.getElementById('output').innerHTML = JSON.stringify(json);
+                    if (JSON.stringify(json)) {
+                        document.getElementById('output').innerHTML = 'Fetching Librato graphs...';
+                    } else {
+                        document.getElementById('output').innerHTML = 'Something has gone wrong. Unable to get Librato details.';
+                    }
                 });                    
         </script>
         <% } %>
@@ -65,4 +80,3 @@ if(appId) {
                 data-librato_token='04f8cd86862b2306118862b7dec513e536e78366de07e86a459e40170fa0e442'>
                 </script>
             <div class='librato-display-media' data-chart_id='8055783' data-duration='3600' data-height='200' data-width='400' data-source='*'></div>
-            

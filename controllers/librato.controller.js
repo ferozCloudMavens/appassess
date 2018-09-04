@@ -8,13 +8,13 @@ let LibratoToken = require('../models/librato-token.model');
 let refresh = require('./refresh-token.controller');
 let encyption = require('../utilities/token-encrypt');
 
-let libratoPlanName = "librato:development";
+let libratoPlanName = process.env.LIBRATO_PLAN_NAME;
 
 router
-    .get('/:userId', (req, res) => {
+    .post('/:userId', (req, res) => {
 
-        let appId = req.query.appId;
-
+        let appId = req.body.appId;
+        
         Token
             .findOne({ 'user_id': req.params.userId })
             .select('refresh_token')
@@ -180,7 +180,6 @@ function saveLibratoConfigVars(addonId, tokenToUse) {
                     reject(Error(err));
                 }
                 let superbody = supres.body;
-                console.log('saveLibratoConfigVars superbody is', superbody);
                 saveConfigsToDb(tokenToUse, superbody);
                 resolve(superbody);
             });

@@ -1,6 +1,6 @@
 let db = require('./db');
 
-const perc95 = new db.Schema({
+const libratoSchema = new db.Schema({
 	userid: { type: String },
 	measurements: {
 		type: 'Mixed'
@@ -50,4 +50,4 @@ const perc95 = new db.Schema({
 	}
 });
 
-module.exports = db.model('LibratoRouterServicePerc95', perc95);
+module.exports = db.model('LibratoMeasurement', libratoSchema);

@@ -4,7 +4,7 @@
 <form action="" method="POST">
     <div class="form-check" style="margin: 20px;">
         <p>Selecting an app below will immediately start the metric-collection process, which includes enabling addons if
-            require.
+            required.
             <br/> Please run the following command in your Terminal/Command Prompt
         </p>
         <!-- HACK: Ask in Slack about how to do this via API  -->
@@ -89,7 +89,7 @@ if(appId) {
         </script>
         <% } %>
 
-            <div id="output"></div>
+            <div id="output" class="m-5 p-5" style="margin: 20px; padding: 20px;"></div>
 
             <% if(libratoCredentials) { %>
                 <script type='text/javascript' src='https://sdk.librato.com/embedding/librato-sdk-v1.2.3-min.js' charset='utf-8' data-librato_email='<%= libratoCredentials.username %>'

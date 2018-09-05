@@ -50,27 +50,27 @@ router
                                 if (libratoExistsOnApp) {
                                     saveLibratoConfigVars(addon.id, updatedToken)
                                         .then((result) => {
-                                            console.log(result);
+                                            console.log('saveLibratoConfigVars', result);
                                         }).catch((err) => {
                                             console.error(err);
                                         });
                                 } else if (libratoOnAnotherApp) {
                                     saveLibratoConfigVars(addon.addon.id, updatedToken)
                                         .then((result) => {
-                                            console.log(result);
+                                            console.log('saveLibratoConfigVars', result);
                                         }).catch((err) => {
                                             console.error(err);
                                         });
                                     attachLibratoToApp(addon.addon.name, appId, updatedToken)
                                         .then((result) => {
-                                            console.log(result);
+                                            console.log('attachLibratoToApp', result);
                                         }).catch((err) => {
                                             console.error(err);
                                         });
                                 } else if (libratoNotFound) {
                                     createLibratoAddon(libratoPlanName, appId, updatedToken)
                                         .then((result) => {
-                                            console.log(result);
+                                            console.log('createLibratoAddon', result);
                                         }).catch((err) => {
                                             console.error(err);
                                         });
@@ -203,7 +203,6 @@ function attachLibratoToApp(addonname, appId, tokenToUse) {
                     reject(Error(err));
                 }
                 let superbody = supres.body;
-                console.log('attachLibratoToApp superbody is', superbody);
                 resolve(superbody);
             });
     });

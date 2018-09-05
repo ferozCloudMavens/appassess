@@ -65,8 +65,23 @@ if(appId) {
             })
                 .then(response => response.json())
                 .then(json => {
+                    document.getElementById('output').innerHTML = 'Fetching Librato graphs...'
                     if (JSON.stringify(json)) {
-                        document.getElementById('output').innerHTML = 'Fetching Librato graphs...';
+                        fetch('/api/apps/librato/<%=applist._id%>')
+                            .then(() => {
+                                console.log('called fetch');
+                                if (document.getElementById('output').innerHTML.includes('Fetching')) {
+                                    document.getElementById('output').innerHTML = '';
+                                    if (window.localStorage) {
+                                        if (!localStorage.getItem('reloaded')) {
+                                            localStorage['reloaded'] = true;
+                                            document.location.reload();
+                                        }
+                                        else
+                                            localStorage.removeItem('reloaded');
+                                    }
+                                }
+                            })
                     } else {
                         document.getElementById('output').innerHTML = 'Something has gone wrong. Unable to get Librato details.';
                     }
@@ -76,7 +91,11 @@ if(appId) {
 
             <div id="output"></div>
 
-            <script type='text/javascript' src='https://sdk.librato.com/embedding/librato-sdk-v1.2.3-min.js' charset='utf-8' data-librato_email='app100037598@heroku.com'
-                data-librato_token='04f8cd86862b2306118862b7dec513e536e78366de07e86a459e40170fa0e442'>
-                </script>
-            <div class='librato-display-media' data-chart_id='8055783' data-duration='3600' data-height='200' data-width='400' data-source='*'></div>
+            <% if(libratoCredentials) { %>
+                <script type='text/javascript' src='https://sdk.librato.com/embedding/librato-sdk-v1.2.3-min.js' charset='utf-8' data-librato_email='<%= libratoCredentials.username %>'
+                    data-librato_token='<%= libratoCredentials.token %>'>
+                    </script>
+                <% libratoCredentials.charts.forEach(id => { %>
+                    <div class='librato-display-media' data-chart_id='<%= id %>' data-duration='3600' data-height='200' data-width='400' data-source='*'></div>
+                    <% }); %>
+                        <% } %>

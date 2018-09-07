@@ -1,6 +1,6 @@
 let mongoose = require('mongoose');
 
-let url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/appassess'
+let url = process.env.MONGOLAB_URI || process.env.MONGO_DB_URL
 
 const addOnSchema = new mongoose.Schema({
 	_id: { type: String },

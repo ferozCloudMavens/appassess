@@ -1,6 +1,6 @@
 let mongoose = require('mongoose');
 
-let url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/appassess'
+let url = process.env.MONGOLAB_URI || process.env.MONGO_DB_URL
 
 const tokenSchema = new mongoose.Schema({
     access_token: { type: String, required: true },

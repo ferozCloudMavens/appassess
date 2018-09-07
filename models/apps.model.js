@@ -1,6 +1,8 @@
-let db = require('./db');
+let mongoose = require('mongoose');
 
-const appListSchema = new db.Schema({
+let url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/appassess'
+
+const appListSchema = new mongoose.Schema({
     _id: { type: String },
     apps: [{
         acm: {
@@ -107,4 +109,6 @@ const appListSchema = new db.Schema({
     }]
 });
 
-module.exports = db.model('AppList', appListSchema);
+module.exports = mongoose
+    .createConnection(url, { useNewUrlParser: true })
+    .model('AppList', appListSchema);

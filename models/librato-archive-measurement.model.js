@@ -1,6 +1,6 @@
 let mongoose = require('mongoose');
 
-let url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/appassess'
+let url = process.env.MONGOLAB_URI_SECOND || 'mongodb://localhost:27017/appassessarchive'
 
 const libratoSchema = new mongoose.Schema({
 	userid: { type: String },
@@ -52,7 +52,6 @@ const libratoSchema = new mongoose.Schema({
 	}
 });
 
-
 module.exports = mongoose
 	.createConnection(url, { useNewUrlParser: true })
-	.model('LibratoMeasurement', libratoSchema);
+	.model('LibratoMeasurementArchive', libratoSchema);

@@ -10,7 +10,8 @@
         <!-- HACK: Ask in Slack about how to do this via API  -->
         <h5>heroku labs:enable log-runtime-metrics -a yourAppName</h5>
         <h3>Please select an app from the list below:</h3>
-        <% for(i of applist.apps) {%>
+        <% if(applist.apps && (typeof applist.apps[Symbol.iterator] === 'function')){
+            for(i of applist.apps) {%>
             <p class="p-3">
                 <input class="form-check-input" type="radio" aria-label="Select an app name" name="appId" value="<%= i.id %>" onclick="this.form.submit();"
                     <% if(appId){ if(i.id==appId){ %>
@@ -22,13 +23,14 @@
                             <%= i.name %>
                         </label>
             </p>
-            <% } %>
+            <% } 
+        }%>
     </div>
 </form>
 
 <% 
 let appToUse; 
-if(appId) { 
+if(appId && applist.apps && (typeof applist.apps[Symbol.iterator] === 'function')) { 
     for(thisApp of applist.apps) {
         if(thisApp.id == appId) {
             appToUse = thisApp;
@@ -96,6 +98,6 @@ if(appId) {
                     data-librato_token='<%= libratoCredentials.token %>'>
                     </script>
                 <% libratoCredentials.charts.forEach(id => { %>
-                    <div class='librato-display-media' data-chart_id='<%= id %>' data-duration='3600' data-height='200' data-width='400' data-source='*'></div>
+                    <div class='librato-display-media' data-chart_id='<%= id %>' data-duration='3600' data-height='200' data-width='400' data-source='*'></div> <br/>
                     <% }); %>
                         <% } %>

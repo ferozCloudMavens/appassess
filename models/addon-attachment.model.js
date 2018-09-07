@@ -1,8 +1,10 @@
-let db = require('./db');
+let mongoose = require('mongoose');
 
-const addOnAttachmentSchema = new db.Schema({
-    _id: { type: String },
-    addonAttachments: [{
+let url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/appassess'
+
+const addOnAttachmentSchema = new mongoose.Schema({
+	_id: { type: String },
+	addonAttachments: [{
 		addon: {
 			id: {
 				type: 'String'
@@ -48,4 +50,6 @@ const addOnAttachmentSchema = new db.Schema({
 	}]
 });
 
-module.exports = db.model('AddonAttachmentList', addOnAttachmentSchema);
+module.exports = mongoose
+	.createConnection(url, { useNewUrlParser: true })
+	.model('AddonAttachmentList', addOnAttachmentSchema);

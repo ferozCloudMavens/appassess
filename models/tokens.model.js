@@ -1,6 +1,8 @@
-let db = require('./db');
+let mongoose = require('mongoose');
 
-const tokenSchema = new db.Schema({
+let url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/appassess'
+
+const tokenSchema = new mongoose.Schema({
     access_token: { type: String, required: true },
     expires_in: Number,
     refresh_token: { type: String, required: true },
@@ -10,4 +12,6 @@ const tokenSchema = new db.Schema({
     date: { type: Date, required: true, default: Date.now }
 });
 
-module.exports = db.model('Token', tokenSchema);
+module.exports = mongoose
+    .createConnection(url, { useNewUrlParser: true })
+    .model('Token', tokenSchema);

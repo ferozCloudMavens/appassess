@@ -1,23 +1,11 @@
-/*
-get id and encrypted password from credentials db
-    Check timestamp
-    if < 8 days
-        unencrypt password
-        make calls and store metrics
-            store using user id and app name
-    else
-        Move all records to archive db
-*/
-
 // IDEA: Delete Librato token after 10 days
-
-// NOTE: Archive data to archive db
 
 let superagent = require('superagent');
 
 let LibratoToken = require('../models/librato-token.model');
 let encyption = require('../utilities/token-encrypt');
 let LibratoMeasurement = require('../models/librato-measurement.model');
+let LibratoMeasurementArchive = require('../models/librato-archive-measurement.model');
 
 const _MS_PER_DAY = 1000 * 60 * 60 * 24;
 const howmanydaystocheck = process.env.NUM_DAYS_TO_ASSESS;
@@ -79,9 +67,11 @@ LibratoToken
             const decryptedToken = encyption.decrypt(doc.LIBRATO_TOKEN);
             const docid = doc._id;
             const libratoUserName = doc.LIBRATO_USERNAME;
-
+            console.log('days', (Date.now() - doc.date) / _MS_PER_DAY);
             if ((Date.now() - doc.date) / _MS_PER_DAY < howmanydaystocheck) {
                 checkMeasurements(urls, docid, libratoUserName, decryptedToken);
+            } else {
+                archiveMeasurements(docid);
             }
         });
     }).catch((err) => {
@@ -90,6 +80,7 @@ LibratoToken
 
 
 function checkMeasurements(urlsToCall, id, username, token) {
+    console.log('calling checkMeasurements');
     urlsToCall.forEach(url => {
         superagent
             .get(url)
@@ -107,4 +98,30 @@ function checkMeasurements(urlsToCall, id, username, token) {
                 });
             });
     });
+}
+
+function archiveMeasurements(id) {
+    console.log('calling archiveMeasurements');    
+    LibratoMeasurement
+        .find({ 'userid': id })
+        .stream()
+        .on('data', (doc) => {            
+            let archiveMeasurement = new LibratoMeasurementArchive(doc);
+            archiveMeasurement.save((mongoErr, _savedDoc) => {
+                if (mongoErr) {
+                    console.error('mongoErr', mongoErr);
+                }               
+                LibratoMeasurement.deleteOne({ 'userid': id }, (err) => {
+                    if (err) {
+                        console.error('delete error', err);
+                    }
+                });
+            });
+        })
+        .on('error', function (err) {
+            console.error('archive stream err', err);
+        })
+        .on('close', function () {
+            console.log('archive close stream');
+        })
 }

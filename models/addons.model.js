@@ -1,8 +1,10 @@
-let db = require('./db');
+let mongoose = require('mongoose');
 
-const addOnSchema = new db.Schema({
-    _id: { type: String },
-    addons: [{
+let url = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/appassess'
+
+const addOnSchema = new mongoose.Schema({
+	_id: { type: String },
+	addons: [{
 		actions: {
 			id: {
 				type: 'String'
@@ -84,4 +86,6 @@ const addOnSchema = new db.Schema({
 	}]
 });
 
-module.exports = db.model('AddonList', addOnSchema);
+module.exports = mongoose
+	.createConnection(url, { useNewUrlParser: true })
+	.model('AddonList', addOnSchema);

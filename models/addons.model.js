@@ -1,26 +1,12 @@
 let mongoose = require('mongoose');
 
-let url = process.env.MONGOLAB_URI || process.env.MONGO_DB_URL
+let url = process.env.MONGOLAB_URI || process.env.MONGO_DB_URL /* FIXME: Remove next OR */ || 'mongodb://localhost:27017/appassess'
 
 const addOnSchema = new mongoose.Schema({
 	_id: { type: String },
 	addons: [{
 		actions: {
-			id: {
-				type: 'String'
-			},
-			label: {
-				type: 'String'
-			},
-			action: {
-				type: 'String'
-			},
-			url: {
-				type: 'String'
-			},
-			requires_owner: {
-				type: 'Boolean'
-			}
+			type: 'Mixed'
 		},
 		addon_service: {
 			id: {

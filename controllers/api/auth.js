@@ -9,7 +9,7 @@ let code = '';
 router.get('/', (req, res) => {
   code = req.query.code;
   tokenCtrl(code)
-    .then((token) => {      
+    .then((token) => {
       AppListCtrl(token, false);
       res.render('oauth-resp', { url: url+token.user_id, code: code })
     }).catch((err) => {

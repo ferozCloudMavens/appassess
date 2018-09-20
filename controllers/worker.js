@@ -30,6 +30,7 @@ let memory_cached_URL = `${BASE_URL}memory-cached${URL_PARAMS}`;
 let memory_postgres_URL = `${BASE_URL}memory-postgres${URL_PARAMS}`;
 let memory_total_URL = `${BASE_URL}memory-total${URL_PARAMS}`;
 let memory_swap_URL = `${BASE_URL}memory_swap${URL_PARAMS}`;
+let memory_rss_URL = `${BASE_URL}memory_rss${URL_PARAMS}`;
 let router_connect_median_URL = `${BASE_URL}router.connect.median${URL_PARAMS}`;
 let router_connect_perc95_URL = `${BASE_URL}router.connect.perc95${URL_PARAMS}`;
 let table_cache_hit_rate_URL = `${BASE_URL}table-cache-hit-rate${URL_PARAMS}`;
@@ -53,6 +54,7 @@ let urls = [
     memory_postgres_URL,
     memory_total_URL,
     memory_swap_URL,
+    memory_rss_URL,
     router_connect_median_URL,
     router_connect_perc95_URL,
     table_cache_hit_rate_URL

@@ -14,7 +14,7 @@ router
     .post('/:userId', (req, res) => {
 
         let appId = req.body.appId;
-        
+
         Token
             .findOne({ 'user_id': req.params.userId })
             .select('refresh_token')
@@ -129,17 +129,37 @@ function saveAddonsToDb(tokenToUse, superbody) {
         .select('addons')
         .exec()
         .then((doc) => {
-            if (doc && !Object.is(doc.addons, superbody)) {
-                addonList = doc;
-                addonList.addons = superbody;
-            } else {
-                addonList = new AddonList({ _id: tokenToUse.user_id, addons: superbody });
-            }
-            addonList.save((mongoErr, _savedDoc) => {
-                if (mongoErr) {
-                    console.error('mongoErr', mongoErr);
+            let addonsToPush = []; 
+            let addonSet = new Set();
+
+            if (doc && doc.addons) {
+                for (const addon of doc.addons) {
+                    addonSet.add(addon.name);
                 }
-            });
+                for (const superaddon of superbody) {                    
+                    if (!addonSet.has(superaddon.name) ) {
+                        addonsToPush.push(superaddon);
+                    }
+                }
+                if (addonsToPush.length) {
+                    AddonList
+                        .update(
+                            { _id: doc._id },
+                            { $push: { addons: addonsToPush } },
+                            (err, updatedDoc) => {
+                                console.log('err is', err);
+                                console.log('updatedDoc is', updatedDoc);
+                            }
+                        );
+                }
+            } else if (!doc) {
+                addonList = new AddonList({ _id: tokenToUse.user_id, addons: superbody });
+                addonList.save((mongoErr, _savedDoc) => {
+                    if (mongoErr) {
+                        console.error('mongoErr', mongoErr);
+                    }
+                });
+            }
         }).catch((err) => {
             console.error(err);
         });

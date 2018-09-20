@@ -30,7 +30,7 @@ function saveToMongo(superbody) {
         .exec()
         .then(foundToken => {
             if (!foundToken) {
-                token.save((mongoErr, savedToken) => {
+                token.save((mongoErr, _savedToken) => {
                     if (mongoErr) {
                         console.error('token save to mongo failed', mongoErr);
                     }

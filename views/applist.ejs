@@ -2,27 +2,31 @@
 
 <form action="" method="POST">
     <div class="form-check" style="margin: 20px;">
-        <p>Selecting an app below will immediately start the metric-collection process, which includes enabling addons if
+        <p>Selecting an app below will immediately start the metric-collection process, which includes enabling addons
+            if
             required.
-            <br/> Please run the following command in your Terminal/Command Prompt
+            <br /> Please run the following command in your Terminal/Command Prompt
         </p>
         <!-- HACK: Ask in Slack about how to do this via API  -->
         <h5>heroku labs:enable log-runtime-metrics -a yourAppName</h5>
         <h3>Please select an app from the list below:</h3>
-        <% if(applist.apps && (typeof applist.apps[Symbol.iterator] === 'function')){
+        <% if (!applist){ %>
+        <p class="p-3"> Oops! Something has gone wrong.</p>
+        <%}
+        else if (applist.apps && (typeof applist.apps[Symbol.iterator] === 'function')){
             for(i of applist.apps) {%>
-            <p class="p-3">
-                <input class="form-check-input" type="radio" aria-label="Select an app name" name="appId" value="<%= i.id %>" onclick="this.form.submit();"
-                    <% if(appId){ if(i.id==appId){ %>
-                <%= "checked" %>
-                    <% } 
-                } %>
-                        %> >
-                        <label class="form-check-label" style="padding: 5px;">
-                            <%= i.name %>
-                        </label>
-            </p>
+        <p class="p-3">
+            <input class="form-check-input" type="radio" aria-label="Select an app name" name="appId" value="<%= i.id %>"
+                onclick="this.form.submit();" <% if(appId){ if(i.id==appId){ %>
+            <%= "checked" %>
             <% } 
+                } %>
+            %> >
+            <label class="form-check-label" style="padding: 5px;">
+                <%= i.name %>
+            </label>
+        </p>
+        <% } 
         }%>
     </div>
 </form>
@@ -38,65 +42,69 @@ if(appId && applist.apps && (typeof applist.apps[Symbol.iterator] === 'function'
     }
 }
 %>
-    <% if(appToUse) { %>
-        <ul class="list-group"></ul>
-        <li class="list-group-item list-group-item-info">Name is
-            <%= appToUse.name %>
-        </li>
-        <li class="list-group-item list-group-item-info">Stack is
-            <%= appToUse.stack.name %>
-        </li>
-        <li class="list-group-item list-group-item-info">Region is
-            <%= appToUse.region.name %>
-        </li>
-        <li class="list-group-item list-group-item-info">Buildpack is
-            <%= appToUse.buildpack_provided_description %>
-        </li>
+<% if(appToUse) { %>
+<ul class="list-group"></ul>
+<li class="list-group-item list-group-item-info">Name is
+    <%= appToUse.name %>
+</li>
+<li class="list-group-item list-group-item-info">Stack is
+    <%= appToUse.stack.name %>
+</li>
+<li class="list-group-item list-group-item-info">Region is
+    <%= appToUse.region.name %>
+</li>
+<li class="list-group-item list-group-item-info">Buildpack is
+    <%= appToUse.buildpack_provided_description %>
+</li>
 
-        <script type="text/javascript">
-            fetch('/librato/<%=applist._id%>', {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    // "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: JSON.stringify({
-                    appId: '<%=appToUse.id%>'
-                })
-            })
-                .then(response => response.json())
-                .then(json => {
-                    document.getElementById('output').innerHTML = 'Fetching Librato graphs...'
-                    if (JSON.stringify(json)) {
-                        fetch('/api/apps/librato/<%=applist._id%>')
-                            .then(() => {
-                                console.log('called fetch');
-                                if (document.getElementById('output').innerHTML.includes('Fetching')) {
-                                    document.getElementById('output').innerHTML = '';
-                                    if (window.localStorage) {
-                                        if (!localStorage.getItem('reloaded')) {
-                                            localStorage['reloaded'] = true;
-                                            document.location.reload();
-                                        }
-                                        else
-                                            localStorage.removeItem('reloaded');
-                                    }
+<script type="text/javascript">
+    fetch('/librato/<%=applist._id%>', {
+        method: 'POST',
+        headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            // "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: JSON.stringify({
+            appId: '<%=appToUse.id%>'
+        })
+    })
+        .then(response => response.json())
+        .then(json => {
+            document.getElementById('output').innerHTML = 'Fetching Librato graphs...'
+            if (JSON.stringify(json)) {
+                fetch('/api/apps/librato/<%=applist._id%>')
+                    .then(() => {
+                        console.log('called fetch');
+                        if (document.getElementById('output').innerHTML.includes('Fetching')) {
+                            document.getElementById('output').innerHTML = '';
+                            if (window.localStorage) {
+                                if (!localStorage.getItem('reloaded')) {
+                                    localStorage['reloaded'] = true;
+                                    document.location.reload();
                                 }
-                            })
-                    } else {
-                        document.getElementById('output').innerHTML = 'Something has gone wrong. Unable to get Librato details.';
-                    }
-                });                    
-        </script>
-        <% } %>
+                                else
+                                    localStorage.removeItem('reloaded');
+                            }
+                        }
+                    })
+            } else {
+                document.getElementById('output').innerHTML = 'Something has gone wrong. Unable to get Librato details.';
+            }
+        });                    
+</script>
+<% } %>
 
-            <div id="output" class="m-5 p-5" style="margin: 20px; padding: 20px;"></div>
+<div id="output" class="m-5 p-5" style="margin: 20px; padding: 20px;"></div>
 
-            <% if(libratoCredentials) { %>
-                <script type='text/javascript' src='https://sdk.librato.com/embedding/librato-sdk-v1.2.3-min.js' charset='utf-8' data-librato_email='<%= libratoCredentials.username %>'
-                    data-librato_token='<%= libratoCredentials.token %>'>
-                    </script>
-                <% libratoCredentials.charts.forEach(id => { %>
-                    <div class='librato-display-media' data-chart_id='<%= id %>' data-duration='3600' data-height='200' data-width='400' data-source='*'></div> <br/>
-                    <% }); %>
-                        <% } %>
+<% if(libratoCredentials) { %>
+<script type='text/javascript' src='https://sdk.librato.com/embedding/librato-sdk-v1.2.3-min.js' charset='utf-8'
+    data-librato_email='<%= libratoCredentials.username %>' data-librato_token='<%= libratoCredentials.token %>'>
+
+
+
+    </script>
+<% libratoCredentials.charts.forEach(id => { %>
+<div class='librato-display-media' data-chart_id='<%= id %>' data-duration='3600' data-height='200' data-width='400'
+    data-source='*'></div> <br />
+<% }); %>
+<% } %>

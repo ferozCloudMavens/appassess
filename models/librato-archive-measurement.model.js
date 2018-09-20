@@ -1,6 +1,6 @@
 let mongoose = require('mongoose');
 
-let url = process.env.MONGOLAB_URI_SECOND || process.env.MONGO_ARCHIVE_DB_URL
+let url = process.env.MONGOLAB_URI_SECOND || process.env.MONGO_ARCHIVE_DB_URL /* FIXME: Remove next OR */ || 'mongodb://localhost:27017/appassessarchive'
 
 const libratoSchema = new mongoose.Schema({
 	userid: { type: String },

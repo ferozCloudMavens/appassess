@@ -18,7 +18,7 @@ let AppList = require('../models/apps.model');
 let AddonList = require('../models/addons.model');
 let AddonAttachmentList = require('../models/addon-attachment.model');
 
-let appName = 'protected-garden-14764'; // HACK: Must change
+let appName = 'protected-garden-14764'; // HACK: Must change // warm-reaches-95020 protected-garden-14764 rocky-forest-95816
 const DATE_RANGE = 100;
 const recommendedStack = process.env.RECOMMENDED_STACK || 'Heroku-18'; // HACK: remove OR condition
 let stats = {
@@ -27,7 +27,8 @@ let stats = {
     appInfo: '',
     addonInfo: '',
     addonAttachmentInfo: '',
-    memoryPercent: ''
+    memoryPercent: '',
+    dynoLoad: ''
 
 };
 let recommendations = {
@@ -35,7 +36,8 @@ let recommendations = {
     stack: '',
     dynos: '',
     memoryPercent: '',
-    memleak: ''
+    memleak: '',
+    dynoLoad: ''
 };
 let dynoTypes = [];
 
@@ -44,21 +46,28 @@ d.setDate(d.getDate() - DATE_RANGE);
 var unixTime = Math.floor(d.getTime() / 1000);
 let measureTime = `measurements.${appName}.measure_time`;
 
-let free, hobby, standard1x;
-free = hobby = standard1x = 512;
-let standard2x = 1024;
-let performancem = 2500;
-let performancel = 14000;
+const memAllowance = {
+    free: 512,
+    hobby: 512,
+    standard1x: 512,
+    standard2x: 1024,
+    performancem: 2500,
+    performancel: 14000,
+};
+const growthInMemoryUsageSeries = 0.75;
+
+const dynoAllowance = {
+    shared: 1,
+    performancem: 4,
+    performancel: 16
+};
 
 LibratoMeasurementArchive
     .aggregate()
     // .unwind({ path: `$measurements.${appName}` })
     .match({ [measureTime]: { $gt: unixTime } }) // ComputedPropertyName - Template literals cannot be used as key in an object literal. Use a computed property instead:
     .group({
-        _id: '$attributes.display_units_long',
-        'measurementsValueAvg': {
-            $avg: `$measurements.${appName}.value`
-        },
+        _id: '$name',
         'measurementsValueMax': {
             $max: `$measurements.${appName}.value`
         },
@@ -84,6 +93,7 @@ function produceReport(res) {
             doBasicPostgresRecommendations(result[2]);
             showAttachmentInfo(result[3]);
             checkMemoryUsage(res);
+            checkDynoLoad(res);
             console.log('Observations: ', stats);
             console.log('Recommendations: ', recommendations);
 
@@ -212,51 +222,88 @@ function doDynoRecommendations(result) {
 
 function checkMemoryUsage(readings) {
     for (const reading of readings) {
-        if (reading._id == 'Megabytes') {
-            var maxReading = Math.max(...reading.measurementsValueMax);
+        if (reading._id == 'memory_rss') {
+            var maxReadingMemory = Math.max(...reading.measurementsValueMax);
             var popped = 1;
             var newarr = reading.measurementsValueMax.slice();
+            let recommendationForMemory = 'Aim to use no more than 80% of the available memory.';
 
             if (dynoTypes.includes('performance-l')) {
-                var memUsedPercent = (maxReading / performancel * 100).toFixed(2);
+                var memUsedPercent = (maxReadingMemory / memAllowance.performancel * 100).toFixed(2);
                 stats.memoryPercent = `The maximum memory that your app has used is ${memUsedPercent}% of the allocated memory.`;
                 if (memUsedPercent > 80) {
-                    recommendations.memoryPercent += 'Aim to use no more than 80% of the available memory.';
+                    recommendations.memoryPercent += recommendationForMemory;
                 }
             } else if (dynoTypes.includes('performance-m')) {
-                var memUsedPercent = (maxReading / performancem * 100).toFixed(2);
+                var memUsedPercent = (maxReadingMemory / memAllowance.performancem * 100).toFixed(2);
                 stats.memoryPercent = `The maximum memory that your app has used is ${memUsedPercent}% of the allocated memory.`;
                 if (memUsedPercent > 80) {
-                    recommendations.memoryPercent += 'Aim to use no more than 80% of the available memory.';
+                    recommendations.memoryPercent += recommendationForMemory;
                 }
             } else if (dynoTypes.includes('standard-2x')) {
-                var memUsedPercent = (maxReading / standard2x * 100).toFixed(2);
+                var memUsedPercent = (maxReadingMemory / memAllowance.standard2x * 100).toFixed(2);
                 stats.memoryPercent = `The maximum memory that your app has used is ${memUsedPercent}% of the allocated memory.`;
                 if (memUsedPercent > 80) {
-                    recommendations.memoryPercent += 'Aim to use no more than 80% of the available memory.';
+                    recommendations.memoryPercent += recommendationForMemory;
                 }
             } else if (dynoTypes.includes('free') || dynoTypes.includes('hobby') || dynoTypes.includes('standard-1x')) {
-                var memUsedPercent = (maxReading / standard1x * 100).toFixed(2);
+                var memUsedPercent = (maxReadingMemory / memAllowance.standard1x * 100).toFixed(2);
                 stats.memoryPercent = `The maximum memory that your app has used is ${memUsedPercent}% of the allocated memory.`;
                 if (memUsedPercent > 80) {
-                    recommendations.memoryPercent += 'Aim to use no more than 80% of the available memory.';
+                    recommendations.memoryPercent += recommendationForMemory;
                 }
             }
 
             series(newarr, newarr.pop());
-            // IDEA: Refine this function. It currently checks every val. Needs more sampling.
             function series(measurementsValueMax, val) {
                 var preval = measurementsValueMax.pop();
                 if (val > preval) {
                     popped = popped + 1;
+                }
+                if (preval) {
                     series(measurementsValueMax, preval);
                 }
             }
-            if (popped == reading.measurementsValueMax.length) {
+            if ((popped / reading.measurementsValueMax.length) > growthInMemoryUsageSeries) {
                 recommendations.memleak += `The app's memory usage has been growing on a daily basis. This probably indicates a memory leak in the application. We recommend investigating possible memory leak causes in the application. https://blog.codeship.com/debugging-a-memory-leak-on-heroku/`;
             }
+            break;
+        }
+    }
+}
+
+function checkDynoLoad(readings) {
+    let allReadings = [];
+    let maxReadingDynoLoad;
+    let recommendationForDynoLoad = 'The Dyno load for your Dyno should be brought to under';
+
+    for (const reading of readings) {
+        let readingId = reading._id;
+        if (readingId == 'load-avg-1m' || readingId == 'load-avg-5m' || readingId == 'load-avg-15m') {
+            allReadings.concat(reading.measurementsValueMax);
         }
     }
 
+    if(allReadings.length) {
+        maxReadingDynoLoad = Math.max(...allReadings);
+        stats.dynoLoad = `The Dyno load average reflects the number of CPU tasks that are waiting to be processed. The maximum dyno load on your app is ${maxReadingDynoLoad}.`;
 
+        if (dynoTypes.includes('performance-l')) {
+            if (maxReadingDynoLoad > dynoAllowance.performancel) {
+                recommendations.dynoLoad += recommendationForDynoLoad + dynoAllowance.performancel;
+            } else if (maxReadingDynoLoad < (dynoAllowance.performancem - 1)) {
+                recommendations.dynoLoad += `The average dyno load indicates that there is a spare CPU capacity to be utilized. It is worth investigating using 
+                Performance-M dynos with different concurrency settings to balance out CPU and memory utilisation. You may be able to run multiple Performance-M dynos
+                therefore utilizing more CPU resources and having dyno redundancy`;
+            }
+        } else if (dynoTypes.includes('performance-m')) {
+            if (maxReadingDynoLoad > dynoAllowance.performancem) {
+                recommendations.dynoLoad += recommendationForDynoLoad + dynoAllowance.performancem;
+            }
+        } else if (dynoTypes.includes('free') || dynoTypes.includes('hobby') || dynoTypes.includes('standard-1x') || dynoTypes.includes('standard-2x')) {
+            if (maxReadingDynoLoad > dynoAllowance.shared) {
+                recommendations.dynoLoad += recommendationForDynoLoad + dynoAllowance.shared;
+            }
+        }
+    }
 }

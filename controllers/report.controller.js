@@ -10,6 +10,7 @@ else
 Chart
 
 Search button should use AJAX - else not found
+
 */
 
 let LibratoMeasurementArchive = require('../models/librato-archive-measurement.model');
@@ -20,7 +21,7 @@ let AddonAttachmentList = require('../models/addon-attachment.model');
 
 let appName = 'protected-garden-14764'; // HACK: Must change // warm-reaches-95020 protected-garden-14764 rocky-forest-95816
 const DATE_RANGE = 100;
-const recommendedStack = process.env.RECOMMENDED_STACK || 'Heroku-18'; // HACK: remove OR condition
+
 let stats = {
     reportDateRange: '',
     dynoInfo: '',
@@ -28,7 +29,8 @@ let stats = {
     addonInfo: '',
     addonAttachmentInfo: '',
     memoryPercent: '',
-    dynoLoad: ''
+    dynoLoad: '',
+    requestResponseTimes: ''
 
 };
 let recommendations = {
@@ -37,7 +39,8 @@ let recommendations = {
     dynos: '',
     memoryPercent: '',
     memleak: '',
-    dynoLoad: ''
+    dynoLoad: '',
+    requestResponseTimes: ''
 };
 let dynoTypes = [];
 
@@ -55,12 +58,14 @@ const memAllowance = {
     performancel: 14000,
 };
 const growthInMemoryUsageSeries = 0.75;
-
+const recommendedStack = process.env.RECOMMENDED_STACK || 'Heroku-18'; // HACK: remove OR condition
 const dynoAllowance = {
     shared: 1,
     performancem: 4,
     performancel: 16
 };
+const maxResponseTimeRecommended = 500;
+
 
 LibratoMeasurementArchive
     .aggregate()
@@ -94,6 +99,7 @@ function produceReport(res) {
             showAttachmentInfo(result[3]);
             checkMemoryUsage(res);
             checkDynoLoad(res);
+            checkRequestResponseTimes(res);
             console.log('Observations: ', stats);
             console.log('Recommendations: ', recommendations);
 
@@ -266,6 +272,8 @@ function checkMemoryUsage(readings) {
             }
             if ((popped / reading.measurementsValueMax.length) > growthInMemoryUsageSeries) {
                 recommendations.memleak += `The app's memory usage has been growing on a daily basis. This probably indicates a memory leak in the application. We recommend investigating possible memory leak causes in the application. https://blog.codeship.com/debugging-a-memory-leak-on-heroku/`;
+            } else if ((popped / reading.measurementsValueMax.length) == 1) {
+                recommendations.memleak += `The app's memory usage has been growing on a daily basis. There's a high probability of a memory leak in the application. We recommend investigating possible memory leak causes in the application. https://blog.codeship.com/debugging-a-memory-leak-on-heroku/`;
             }
             break;
         }
@@ -275,22 +283,23 @@ function checkMemoryUsage(readings) {
 function checkDynoLoad(readings) {
     let allReadings = [];
     let maxReadingDynoLoad;
-    let recommendationForDynoLoad = 'The Dyno load for your Dyno should be brought to under';
+    let recommendationForDynoLoad = 'The Dyno load for your Dyno should be brought to under ';
+    let referenceConcurrency = '. Please refer to https://devcenter.heroku.com/articles/optimizing-dyno-usage#concurrent-web-servers.'
 
     for (const reading of readings) {
         let readingId = reading._id;
         if (readingId == 'load-avg-1m' || readingId == 'load-avg-5m' || readingId == 'load-avg-15m') {
-            allReadings.concat(reading.measurementsValueMax);
+            allReadings = allReadings.concat(reading.measurementsValueMax);
         }
     }
 
-    if(allReadings.length) {
+    if (allReadings.length) {
         maxReadingDynoLoad = Math.max(...allReadings);
         stats.dynoLoad = `The Dyno load average reflects the number of CPU tasks that are waiting to be processed. The maximum dyno load on your app is ${maxReadingDynoLoad}.`;
 
         if (dynoTypes.includes('performance-l')) {
             if (maxReadingDynoLoad > dynoAllowance.performancel) {
-                recommendations.dynoLoad += recommendationForDynoLoad + dynoAllowance.performancel;
+                recommendations.dynoLoad += recommendationForDynoLoad + dynoAllowance.performancel + referenceConcurrency;
             } else if (maxReadingDynoLoad < (dynoAllowance.performancem - 1)) {
                 recommendations.dynoLoad += `The average dyno load indicates that there is a spare CPU capacity to be utilized. It is worth investigating using 
                 Performance-M dynos with different concurrency settings to balance out CPU and memory utilisation. You may be able to run multiple Performance-M dynos
@@ -298,12 +307,49 @@ function checkDynoLoad(readings) {
             }
         } else if (dynoTypes.includes('performance-m')) {
             if (maxReadingDynoLoad > dynoAllowance.performancem) {
-                recommendations.dynoLoad += recommendationForDynoLoad + dynoAllowance.performancem;
+                recommendations.dynoLoad += recommendationForDynoLoad + dynoAllowance.performancem + referenceConcurrency;
             }
         } else if (dynoTypes.includes('free') || dynoTypes.includes('hobby') || dynoTypes.includes('standard-1x') || dynoTypes.includes('standard-2x')) {
             if (maxReadingDynoLoad > dynoAllowance.shared) {
-                recommendations.dynoLoad += recommendationForDynoLoad + dynoAllowance.shared;
+                recommendations.dynoLoad += recommendationForDynoLoad + dynoAllowance.shared + referenceConcurrency;
             }
         }
+    }
+}
+
+function checkRequestResponseTimes(readings) {
+    let median = [];
+    let perc95 = [];
+    let perc99 = [];
+    let maxMedianReading, maxperc95Reading, maxperc99Reading;
+    let recommendationForReqRes = `Requests should take less than ${maxResponseTimeRecommended}ms to complete. You should find and optimize the slowest transactions. This can be done with a transaction trace.`;
+
+
+    for (const reading of readings) {
+        let readingId = reading._id;        
+        if (readingId == 'router.service.median') {            
+            median = median.concat(reading.measurementsValueMax);            
+        } else if (readingId == 'router.service.perc95') {
+            perc95 = perc95.concat(reading.measurementsValueMax);
+        } else if (readingId == 'router.service.perc99') {
+            perc99 = perc99.concat(reading.measurementsValueMax);
+        }
+    }
+
+    if (median.length) {
+        maxMedianReading = Math.max(...median);
+        stats.requestResponseTimes += ` 50% of your application’s web requests were completed within less time than ${maxMedianReading.toFixed(2)}ms, and 50% were completed within more.`;
+    }
+    if (perc95.length) {
+        maxperc95Reading = Math.max(...perc95);
+        stats.requestResponseTimes += ` 95% of your application’s web requests were completed within less time than ${maxperc95Reading.toFixed(2)}ms, and 5% were completed within more.`;
+    }
+    if (perc99.length) {
+        maxperc99Reading = Math.max(...perc99);
+        stats.requestResponseTimes += ` 99% of your application’s web requests were completed within less time than ${maxperc99Reading.toFixed(2)}ms, and 1% were completed within more.`;
+    }
+
+    if (maxMedianReading > maxResponseTimeRecommended || maxperc95Reading > maxResponseTimeRecommended || maxperc99Reading > maxResponseTimeRecommended) {
+        recommendations.requestResponseTimes += recommendationForReqRes;
     }
 }

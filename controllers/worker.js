@@ -17,6 +17,10 @@ let router_service_perc95_URL = `${BASE_URL}router.service.perc95${URL_PARAMS}`;
 let router_service_perc99_URL = `${BASE_URL}router.service.perc99${URL_PARAMS}`;
 let ROUTER_SERVICE_URL = `${BASE_URL}router.service${URL_PARAMS}`;
 let router_service_median_URL = `${BASE_URL}router.service.median${URL_PARAMS}`;
+let router_status_2xx_URL = `${BASE_URL}router.status.2xx${URL_PARAMS}`;
+let router_status_3xx_URL = `${BASE_URL}router.status.3xx${URL_PARAMS}`;
+let router_status_4xx_URL = `${BASE_URL}router.status.4xx${URL_PARAMS}`;
+let router_status_5xx_URL = `${BASE_URL}router.status.5xx${URL_PARAMS}`;
 let active_connections_URL = `${BASE_URL}active-connections${URL_PARAMS}`;
 let db_size_URL = `${BASE_URL}db_size${URL_PARAMS}`;
 let errors_http_h10_URL = `${BASE_URL}errors.http.h10${URL_PARAMS}`;
@@ -27,10 +31,15 @@ let index_cache_hit_rate_URL = `${BASE_URL}index-cache-hit-rate${URL_PARAMS}`;
 let load_avg_15m_URL = `${BASE_URL}load-avg-15m${URL_PARAMS}`;
 let load_avg_5m_URL = `${BASE_URL}load-avg-5m${URL_PARAMS}`;
 let memory_cached_URL = `${BASE_URL}memory-cached${URL_PARAMS}`;
+let memory_free_URL = `${BASE_URL}memory-free${URL_PARAMS}`;
 let memory_postgres_URL = `${BASE_URL}memory-postgres${URL_PARAMS}`;
 let memory_total_URL = `${BASE_URL}memory-total${URL_PARAMS}`;
+let memory_pgpgin_URL = `${BASE_URL}memory_pgpgin${URL_PARAMS}`;
+let memory_pgpgout_URL = `${BASE_URL}memory_pgpgout${URL_PARAMS}`;
 let memory_swap_URL = `${BASE_URL}memory_swap${URL_PARAMS}`;
 let memory_rss_URL = `${BASE_URL}memory_rss${URL_PARAMS}`;
+let read_iops_URL = `${BASE_URL}read-iops${URL_PARAMS}`;
+let write_iops_URL = `${BASE_URL}write-iops${URL_PARAMS}`;
 let router_connect_median_URL = `${BASE_URL}router.connect.median${URL_PARAMS}`;
 let router_connect_perc95_URL = `${BASE_URL}router.connect.perc95${URL_PARAMS}`;
 let table_cache_hit_rate_URL = `${BASE_URL}table-cache-hit-rate${URL_PARAMS}`;
@@ -41,6 +50,10 @@ let urls = [
     router_service_perc99_URL,
     ROUTER_SERVICE_URL,
     router_service_median_URL,
+    router_status_2xx_URL,
+    router_status_3xx_URL,
+    router_status_4xx_URL,
+    router_status_5xx_URL,
     active_connections_URL,
     db_size_URL,
     errors_http_h10_URL,
@@ -51,10 +64,15 @@ let urls = [
     load_avg_15m_URL,
     load_avg_5m_URL,
     memory_cached_URL,
+    memory_free_URL,
     memory_postgres_URL,
     memory_total_URL,
+    memory_pgpgin_URL,
+    memory_pgpgout_URL,
     memory_swap_URL,
     memory_rss_URL,
+    read_iops_URL,
+    write_iops_URL,
     router_connect_median_URL,
     router_connect_perc95_URL,
     table_cache_hit_rate_URL
